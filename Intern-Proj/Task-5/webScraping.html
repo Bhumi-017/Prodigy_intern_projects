@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Scraping Data Extractor (Client-Side)</title>
+    <!-- Load Tailwind CSS --><script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #2e1a1a; /* Deep Red/Maroon background */
+        }
+        .container-card {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div id="app" class="w-full max-w-4xl bg-red-900 bg-opacity-70 container-card p-6 md:p-10 rounded-xl">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-extrabold text-red-400">Web Scraper</h1>
+            <p class="text-red-300 mt-2">Simulating Product Data Extraction & CSV Export</p>
+            <div id="cors-warning" class="mt-4 p-3 bg-red-700 text-red-100 rounded-lg text-sm transition-opacity duration-500 opacity-0 hidden">
+                **Note:** Due to browser security (CORS), actual scraping of external sites is blocked. We are displaying **mock data** to demonstrate the extraction and CSV export functionality.
+            </div>
+        </header>
+
+        <!-- Input and Action Controls --><div class="space-y-4">
+            <div class="flex flex-col md:flex-row gap-4">
+                <input type="url" id="targetUrl" value="https://example.com/ecommerce-products" placeholder="Enter Target E-commerce URL"
+                       class="flex-grow p-3 rounded-lg bg-red-800 text-white border border-red-700 focus:ring-red-500 focus:border-red-500 transition duration-150"
+                       aria-label="Target URL">
+                <button onclick="simulateScrape()" id="scrapeBtn"
+                        class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-md transition duration-150 disabled:bg-red-400 disabled:cursor-not-allowed">
+                    <span id="btnText">Scrape Data</span>
+                    <svg id="spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Results Section Header and Export Button --><div class="flex justify-between items-center pt-6 border-t border-red-800">
+                <h2 class="text-2xl font-bold text-gray-100">Scraped Results</h2>
+                <button onclick="exportData()" id="exportBtn" disabled
+                        class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-md transition duration-150 disabled:bg-gray-500 disabled:cursor-not-allowed">
+                    Export to CSV ( <span id="itemCount">0</span> )
+                </button>
+            </div>
+        </div>
+
+        <!-- Data Display Table --><div class="mt-4 overflow-x-auto rounded-lg">
+            <table class="min-w-full divide-y divide-red-800">
+                <thead class="bg-red-800">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-red-300 uppercase tracking-wider">Product Name</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-red-300 uppercase tracking-wider">Price</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-red-300 uppercase tracking-wider">Rating</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsTableBody" class="bg-red-900 divide-y divide-red-800 text-gray-200">
+                    <tr id="initialMessage">
+                        <td colspan="3" class="px-4 py-4 text-center text-red-300 italic">Click 'Scrape Data' to see results.</td>
+                    </tr>
+                    <!-- Scraped data rows will be injected here --></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Global state for the application
+        let scrapedData = [];
+        const scrapeBtn = document.getElementById('scrapeBtn');
+        const btnText = document.getElementById('btnText');
+        const spinner = document.getElementById('spinner');
+        const exportBtn = document.getElementById('exportBtn');
+        const resultsTableBody = document.getElementById('resultsTableBody');
+        const itemCountSpan = document.getElementById('itemCount');
+        const corsWarning = document.getElementById('cors-warning');
+
+        // --- Mock Data for Simulation ---
+        const mockProducts = [
+            { name: "High-Speed Wi-Fi 6 Router", price: 149.99, rating: 4.6 },
+            { name: "1TB Portable SSD", price: 89.99, rating: 4.8 },
+            { name: "Smart Home Security Camera (V3)", price: 35.00, rating: 4.2 },
+            { name: "Professional Streaming Microphone", price: 179.95, rating: 4.9 },
+            { name: "LED Desk Lamp with Wireless Charging", price: 55.49, rating: 4.4 },
+        ];
+        function simulateScrape() {
+            // Show CORS warning
+            corsWarning.classList.remove('hidden', 'opacity-0');
+            corsWarning.classList.add('opacity-100');
+
+            // Set loading state
+            scrapeBtn.disabled = true;
+            exportBtn.disabled = true;
+            btnText.textContent = 'Scraping...';
+            spinner.classList.remove('hidden');
+            resultsTableBody.innerHTML = '';
+            itemCountSpan.textContent = '0';
+
+            // Simulate network delay and scraping time (1.5 seconds)
+            setTimeout(() => {
+                scrapedData = mockProducts;
+                renderResults(scrapedData);
+
+                // Reset button state
+                scrapeBtn.disabled = false;
+                btnText.textContent = 'Scrape Data';
+                spinner.classList.add('hidden');
+            }, 1500);
+        }
+        function renderResults(data) {
+            if (data.length === 0) {
+                resultsTableBody.innerHTML = `<tr><td colspan="3" class="px-4 py-4 text-center text-red-300 italic">No products found.</td></tr>`;
+                exportBtn.disabled = true;
+                itemCountSpan.textContent = '0';
+                return;
+            }
+
+            const rowsHtml = data.map(product => `
+                <tr class="hover:bg-red-800 transition duration-100">
+                    <td class="px-4 py-3 whitespace-nowrap font-medium">${product.name}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-green-400">$${product.price.toFixed(2)}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        ${'★'.repeat(Math.floor(product.rating))}
+                        <span class="text-red-300">(${product.rating})</span>
+                    </td>
+                </tr>
+            `).join('');
+
+            resultsTableBody.innerHTML = rowsHtml;
+            exportBtn.disabled = false;
+            itemCountSpan.textContent = data.length;
+        }
+        function convertToCSV(data) {
+            const headers = ["Product Name", "Price", "Rating"];
+            const headerRow = headers.join(',') + '\n';
+
+            const csvRows = data.map(product => {
+                // Ensure price is formatted as a string without commas for CSV integrity
+                const priceString = product.price.toFixed(2);
+                return `"${product.name}",${priceString},${product.rating}`;
+            }).join('\n');
+
+            return headerRow + csvRows;
+        }
+        function exportData() {
+            if (scrapedData.length === 0) {
+                // Use a visual cue instead of alert
+                alertMessage('No data to export!', 'red');
+                return;
+            }
+
+            const csvString = convertToCSV(scrapedData);
+            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const filename = 'product_data_' + new Date().toISOString().slice(0, 10) + '.csv';
+
+            // Create a temporary link element to trigger the download
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            alertMessage(`Successfully exported ${scrapedData.length} items to ${filename}!`, 'green');
+        }
+        function alertMessage(message, type) {
+            let msgBox = document.getElementById('customMessageBox');
+            if (!msgBox) {
+                msgBox = document.createElement('div');
+                msgBox.id = 'customMessageBox';
+                msgBox.className = 'fixed top-4 right-4 p-4 rounded-lg text-white font-semibold shadow-2xl transition-all duration-300 z-50 transform translate-y-[-100px] opacity-0';
+                document.body.appendChild(msgBox);
+            }
+
+            msgBox.textContent = message;
+            msgBox.className = 'fixed top-4 right-4 p-4 rounded-lg text-white font-semibold shadow-2xl transition-all duration-300 z-50 transform translate-y-0 opacity-100';
+
+            if (type === 'green') {
+                msgBox.style.backgroundColor = '#10B981'; // Tailwind green-500
+            } else if (type === 'red') {
+                msgBox.style.backgroundColor = '#EF4444'; // Tailwind red-500
+            }
+
+            // Hide the message after 3 seconds
+            setTimeout(() => {
+                msgBox.classList.remove('translate-y-0', 'opacity-100');
+                msgBox.classList.add('translate-y-[-100px]', 'opacity-0');
+            }, 3000);
+        }
+
+    </script>
+</body>
+</html>

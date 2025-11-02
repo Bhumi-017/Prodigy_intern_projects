@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temperature Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: white; /* Light background */
+        }
+        .converter-card {
+            background: linear-gradient(145deg, whitesmoke, white);
+            box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.1), -10px -10px 20px rgba(255, 255, 255, 0.5); /* Lighter shadow for light theme */
+            transition: all 0.3s ease-in-out;
+        }
+        .result-box {
+            background-color: white;
+            border: 1px solid #e2e8f0; /* Light gray border */
+            transition: all 0.3s ease-in-out;
+        }
+        input[type="number"],
+        select { /* Apply styles to both input and select */
+            border: 2px solid #e2e8f0; /* Light gray border */
+            background-color: #f7fafc; /* Lighter background */
+            color: #1a202c; /* Updated to a definitive dark color for better contrast */
+            transition: border-color 0.3s;
+        }
+        input[type="number"]:focus,
+        select:focus {
+            border-color: #63b3ed; /* Light blue focus */
+            box-shadow: 0 0 0 3px rgba(99, 179, 237, 0.5);
+            outline: none;
+        }
+        /* Adjust text colors for labels and general text in light theme */
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div id="app" class="converter-card w-full max-w-sm p-6 rounded-2xl text-gray-900 pt-4"> 
+        <h1 class="text-xl font-bold text-center mb-6 tracking-wider"> 
+            TEMPERATURE CONVERTER
+        </h1>
+        <!-- Input Section --><div class="space-y-6">
+            <div>
+                <label for="temperature" class="block text-md
+                font-medium mb-2 text-gray-500">Temperature Value</label>
+                <input type="number" id="temperature" value="0"
+                       class="w-full p-3 rounded-full focus:ring-2 focus:ring-indigo-500"
+                       > <!-- Removed oninput="convertTemperature()" -->
+            </div>
+
+            <div>
+                <label for="unit" class="block text-md font-medium mb-2 text-gray-500">Original Unit</label>
+                <select id="unit"
+                        class="w-full p-3 rounded-full appearance-none"
+                        > <!-- Removed onchange="convertTemperature()" -->
+                    <option value="C">Celsius (°C)</option>
+                    <option value="F">Fahrenheit (°F)</option>
+                    <option value="K">Kelvin (K)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Action Button Section: Submit and Reset -->
+        <div class="text-right mt-4 mb-6 space-x-3"> 
+            <button onclick="convertTemperature()"
+                    class="bg-gray-900 text-white py-1 px-4 rounded-full text-sm font-semibold hover:bg-gray-500 transition duration-150 ease-in-out shadow-md">
+                Submit
+            </button>
+            <button onclick="resetConverter()"
+                    class="bg-indigo-500 text-white py-1 px-4 rounded-full text-sm font-semibold hover:bg-indigo-600 transition duration-150 ease-in-out shadow-md">
+                Reset
+            </button>
+        </div>
+
+        <div class="my-6"> <!-- Reduced vertical margin -->
+            <hr class="border-t border-gray-300"> <!-- Adjusted border color for light theme --></div>
+
+        <!-- Output Section --><h2 class="text-md font-semibold mb-4">Converted Results</h2> <!-- Reduced from text-xl to text-lg -->
+
+        <div class="space-y-3"> <!-- Reduced spacing between result boxes -->
+            <!-- Celsius Result --><div class="result-box p-4 rounded-full flex justify-between items-center">
+                <span class="text-gray-900">Celsius (°C):</span>
+                <span id="resultC" class="text-xl font-bold text-gray-500">0.00</span> <!-- Reduced from text-2xl to text-xl -->
+            </div>
+
+            <!-- Fahrenheit Result --><div class="result-box p-4 rounded-full flex justify-between items-center">
+                <span class="text-gray-900">Fahrenheit (°F):</span>
+                <span id="resultF" class="text-xl font-bold text-gray-500">0.00</span> <!-- Reduced from text-2xl to text-xl -->
+            </div>
+
+            <!-- Kelvin Result --><div class="result-box p-4 rounded-full flex justify-between items-center">
+                <span class="text-gray-900">Kelvin (K):</span>
+                <span id="resultK" class="text-xl font-bold text-gray-500">0.00</span> <!-- Reduced from text-2xl to text-xl -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initial call is needed to show default 0°C conversion on load
+            convertTemperature();
+        });
+
+        function convertTemperature() {
+            const tempInput = document.getElementById('temperature');
+            const unitSelect = document.getElementById('unit');
+            const resultC = document.getElementById('resultC');
+            const resultF = document.getElementById('resultF');
+            const resultK = document.getElementById('resultK');
+
+            let tempValue = parseFloat(tempInput.value);
+            const originalUnit = unitSelect.value;
+
+            if (isNaN(tempValue)) {
+                resultC.textContent = '---';
+                resultF.textContent = '---';
+                resultK.textContent = '---';
+                return;
+            }
+
+            let C, F, K;
+
+            switch (originalUnit) {
+                case 'C':
+                    C = tempValue;
+                    break;
+                case 'F':
+                    C = (tempValue - 32) * 5 / 9;
+                    break;
+                case 'K':
+                    C = tempValue - 273.15;
+                    break;
+                default:
+                    return;
+            }
+
+            F = (C * 9 / 5) + 32;
+            K = C + 273.15;
+
+            // Absolute Zero check
+            if (K < 0) {
+                 resultC.textContent = 'Impossible';
+                 resultF.textContent = 'Impossible';
+                 resultK.textContent = 'Impossible';
+                 alertMessage("Temperature below absolute zero (0K) is physically impossible.", "error");
+                 return;
+            }
+
+            resultC.textContent = C.toFixed(2);
+            resultF.textContent = F.toFixed(2);
+            resultK.textContent = K.toFixed(2);
+             alertMessage("Conversion complete!", "success"); // Notify user conversion happened on click
+        }
+
+        /**
+         * Resets the converter inputs to the default state (0°C).
+         */
+        function resetConverter() {
+             console.log("Reset button clicked. Attempting to reset values."); // Added for debugging
+             document.getElementById('temperature').value = '0';
+             document.getElementById('unit').value = 'C';
+             convertTemperature();
+             alertMessage("Converter reset to 0°C.", "success");
+        }
+
+        function alertMessage(message, type) {
+            let toast = document.getElementById('toast-message');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'toast-message';
+                toast.className = 'fixed top-4 right-4 p-4 rounded-lg shadow-xl text-white transition-opacity duration-300 opacity-0';
+                document.body.appendChild(toast);
+            }
+
+            toast.textContent = message;
+            toast.style.opacity = 1;
+            toast.className = 'fixed top-4 right-4 p-4 rounded-lg shadow-xl text-white transition-opacity duration-300 opacity-100';
+
+            if (type === 'error') {
+                toast.style.backgroundColor = '#e53e3e'; // Red
+            } else {
+                toast.style.backgroundColor = '#38a169'; // Green
+            }
+
+            setTimeout(() => {
+                toast.style.opacity = 0;
+            }, 4000);
+        }
+    </script>
+</body>
+</html>
